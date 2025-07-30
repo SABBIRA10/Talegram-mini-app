@@ -1,0 +1,253 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SABBIR INKAM</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      background-color: #8e2de2;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .container, .auth-container {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+    }
+    .section {
+      background-color: white;
+      padding: 20px;
+      margin: 10px 0;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    button, input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #8e2de2;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .hidden { display: none; }
+    .nav-btns button {
+      width: 48%;
+      margin: 1%;
+    }
+    #userInfo strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">SABBIR INKAM</div>
+
+  <!-- Sign Up / Login Section -->
+  <div class="auth-container section" id="auth">
+    <h3>Sign Up</h3>
+    <input type="text" id="signupName" placeholder="Your Name">
+    <input type="text" id="signupPhone" placeholder="Mobile Number">
+    <input type="password" id="signupPassword" placeholder="Password">
+    <input type="text" id="signupRef" placeholder="Referral Code (optional)">
+    <button onclick="signup()">Sign Up</button>
+
+    <h3 style="margin-top:30px;">Login</h3>
+    <input type="text" id="loginPhone" placeholder="Mobile Number">
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- Main App Interface -->
+  <div class="container hidden" id="mainApp">
+    <div class="section" id="userInfo">
+      <strong id="userName">Name: </strong>
+      <strong id="userPhone">Phone: </strong>
+      <strong id="userBalance">Balance: 0</strong>
+    </div>
+
+    <div class="section" id="tasks">
+      <h4>Visit & Earn</h4>
+      <button onclick="loadAd(1)">Visit & Earn 1</button>
+      <button onclick="loadAd(2)">Visit & Earn 2</button>
+      <button onclick="loadAd(3)">Visit & Earn 3</button>
+      <button onclick="loadAd(4)">Visit & Earn 4</button>
+      <div id="ad-container" class="hidden"></div>
+    </div>
+
+    <div class="section" id="withdraw">
+      <h4>Withdraw</h4>
+      <p id="withdrawBalance">Balance: 0</p>
+      <button onclick="selectMethod('recharge')">Recharge (5000 Coins = 30৳)</button>
+      <button onclick="selectMethod('bkash')">Bkash (8000 Coins = 50৳)</button>
+      <button onclick="selectMethod('nagad')">Nagad (8000 Coins = 50৳)</button>
+      <input type="text" id="withdrawNumber" placeholder="Enter your number">
+      <button onclick="redeem()">REDEEM</button>
+    </div>
+
+    <div class="section" id="history">
+      <h4>Withdraw History</h4>
+      <ul id="historyList"></ul>
+    </div>
+
+    <div class="section" id="leaderboard">
+      <h4>Top Users</h4>
+      <ul id="topUsers"></ul>
+    </div>
+
+    <div class="section nav-btns">
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <script>
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+    let rewardGiven = false;
+
+    function signup() {
+      const name = document.getElementById("signupName").value;
+      const phone = document.getElementById("signupPhone").value;
+      const password = document.getElementById("signupPassword").value;
+
+      if (!name  !phone  !password) return alert("❌ Fill all fields");
+      if (users.find(u => u.phone === phone)) return alert("❌ User already exists");
+
+const newUser = { name, phone, password, balance: 0, totalAds: 0, history: [] };
+      users.push(newUser);
+      localStorage.setItem("users", JSON.stringify(users));
+      alert("✅ Account created. Now login.");
+    }
+
+    function login() {
+      const phone = document.getElementById("loginPhone").value;
+      const password = document.getElementById("loginPassword").value;
+
+      const user = users.find(u => u.phone === phone && u.password === password);
+      if (!user) return alert("❌ Invalid credentials");
+
+      currentUser = user;
+      localStorage.setItem("currentUser", JSON.stringify(currentUser));
+      document.getElementById("auth").classList.add("hidden");
+      document.getElementById("mainApp").classList.remove("hidden");
+      updateUI();
+    }
+
+    function logout() {
+      localStorage.removeItem("currentUser");
+      document.getElementById("auth").classList.remove("hidden");
+      document.getElementById("mainApp").classList.add("hidden");
+    }
+
+    function updateUI() {
+      document.getElementById("userName").innerText = "Name: " + currentUser.name;
+      document.getElementById("userPhone").innerText = "Phone: " + currentUser.phone;
+      document.getElementById("userBalance").innerText = "Balance: " + currentUser.balance;
+      document.getElementById("withdrawBalance").innerText = "Balance: " + currentUser.balance;
+      updateHistory();
+      updateLeaderboard();
+    }
+
+    function loadAd(taskNum) {
+      const adContainer = document.getElementById("ad-container");
+      adContainer.innerHTML = "";
+      adContainer.classList.remove("hidden");
+      rewardGiven = false;
+
+      if (taskNum === 1 || taskNum === 2) {
+        const script = document.createElement("script");
+        script.src = "//pl27302823.profitableratecpm.com/bb/4c/ac/bb4cac11790b8ef8b5da2aaa55d74286.js";
+        script.type = 'text/javascript';
+        adContainer.appendChild(script);
+
+        alert("Click ad and stay 30s");
+        document.body.addEventListener("click", () => {
+          if (!rewardGiven) {
+            rewardGiven = true;
+            setTimeout(() => {
+              currentUser.balance += 100;
+              currentUser.totalAds++;
+              localStorage.setItem("currentUser", JSON.stringify(currentUser));
+              users = users.map(u => u.phone === currentUser.phone ? currentUser : u);
+              localStorage.setItem("users", JSON.stringify(users));
+              alert("✅ 100 Coins added!");
+              updateUI();
+              adContainer.classList.add("hidden");
+            }, 30000);
+          }
+        }, { once: true });
+      }
+    }
+
+    function selectMethod(method) {
+      const need = method === 'recharge' ? 5000 : 8000;
+      document.getElementById("withdrawBalance").innerText = Balance: ${currentUser.balance} (Need ${need});
+      document.getElementById("withdrawMethod") = method;
+    }
+
+    function redeem() {
+      const number = document.getElementById("withdrawNumber").value;
+      const method = document.getElementById("withdrawMethod");
+      if (!number || !method) return alert("❌ Enter number and select method");
+
+      const need = method === 'recharge' ? 5000 : 8000;
+      if (currentUser.balance >= need) {
+        currentUser.balance -= need;
+        const now = new Date().toLocaleString();
+        currentUser.history.push(${now} - ${method} to ${number} - ${need} Coins);
+        localStorage.setItem("currentUser", JSON.stringify(currentUser));
+        users = users.map(u => u.phone === currentUser.phone ? currentUser : u);
+        localStorage.setItem("users", JSON.stringify(users));
+        alert("✅ Withdraw successful");
+        updateUI();
+      } else {
+        alert("❌ Not enough balance");
+      }
+    }
+
+    function updateHistory() {
+      const list = document.getElementById("historyList");
+      list.innerHTML = "";
+      currentUser.history.forEach(h => {
+        const li = document.createElement("li");
+        li.textContent = h;
+        list.appendChild(li);
+      });
+    }
+
+function updateLeaderboard() {
+      const top = [...users].sort((a,b) => b.balance - a.balance).slice(0,5);
+      const list = document.getElementById("topUsers");
+      list.innerHTML = "";
+      top.forEach(u => {
+        const li = document.createElement("li");
+        li.textContent = ${u.name} - ${u.balance} Coins;
+        list.appendChild(li);
+      });
+    }
+
+    // Auto-login
+    if (currentUser) {
+      document.getElementById("auth").classList.add("hidden");
+      document.getElementById("mainApp").classList.remove("hidden");
+      updateUI();
+    }
+  </script>
+</body>
+</html>
